@@ -37,7 +37,7 @@ export function NewsProvider({children}){
     }, [])
 
     return (
-        <GetNewsContext.Provider value={{ news, getNews, isLoading}}>
+        <GetNewsContext.Provider value={{ news, getNews, isLoading, setIsLoading}}>
             {children}
         </GetNewsContext.Provider>
     )
