@@ -4,11 +4,13 @@ export const GetNewsContext = createContext()
 
 export function NewsProvider({children}){
     const [ news, setNews ] = useState([])
+    const [ isLoading, setIsLoading ] = useState(false)
 
     const BACKEND_URL = 'http://127.0.0.1:8000'
 
     async function getNews(){
         try{
+            setIsLoading(true)
             const res = await fetch(`${BACKEND_URL}/bbcSummarizer/newsProvider`, {
                 method: 'GET',
                 headers: {
@@ -25,6 +27,8 @@ export function NewsProvider({children}){
             }
         }catch(err){
             console.error('Error fetching news:', err)
+        }finally{
+            setIsLoading(false)
         }
     }
 
@@ -33,7 +37,7 @@ export function NewsProvider({children}){
     }, [])
 
     return (
-        <GetNewsContext.Provider value={{ news, getNews}}>
+        <GetNewsContext.Provider value={{ news, getNews, isLoading}}>
             {children}
         </GetNewsContext.Provider>
     )

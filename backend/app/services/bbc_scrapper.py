@@ -1,5 +1,6 @@
 from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
+import time
 
 def bbc_scrapper():
     url = 'https://www.bbc.com/news'
@@ -9,31 +10,62 @@ def bbc_scrapper():
         page = browser.new_page()
         page.goto(url, timeout=60000)
 
+        # Scroll down to load lazy images
+        page.evaluate("""
+            () => {
+                return new Promise(resolve => {
+                    let totalHeight = 0;
+                    const distance = 500;
+                    const timer = setInterval(() => {
+                        window.scrollBy(0, distance);
+                        totalHeight += distance;
+                        if(totalHeight >= document.body.scrollHeight){
+                            clearInterval(timer);
+                            resolve();
+                        }
+                    }, 300);
+                });
+            }
+        """)
+        time.sleep(2)  # give images a moment to load
+
         html = page.content()
         browser.close()
     
     soup = BeautifulSoup(html, 'html.parser')
-    stories = []
-    
-    for main in soup.select('section.sc-92527ac1-1'):
-        links = main.select('a.sc-8a623a54-0')        # all links in this section
-        imgs = main.select('img.sc-5340b511-0')       # all images in this section
-        h2_tags = main.select('h2.sc-9d830f2a-3')     # all headings in this section
 
-        # iterate over the items together (zip limits to shortest list)
-        for link, h2_tag, img_tag in zip(links[:2], h2_tags[:2], imgs[:2]):
-            if img_tag:
-                img_url = img_tag['src']
-            else:
-                continue
-            if h2_tag:
-                title = h2_tag.get_text(strip=True)
-            else:
-                continue
-            href = link.get('href')
-            if href and not href.startswith('https'):
-                href = 'https://www.bbc.com' + href
-            
-            stories.append({'title': title, 'url': href, 'img_path': img_url})
+    stories = []
+    seen_urls = set()
+
+    for article in soup.select('div.sc-225578b-0'):
+        link_tag = article.select_one('a.sc-8a623a54-0')
+        img_tag = article.select_one('img.sc-5340b511-0')
+        h2_tag = article.select_one('h2.sc-9d830f2a-3')
+
+        if not (link_tag and img_tag and h2_tag):
+            continue
+
+        title = h2_tag.get_text(strip=True)
+
+        srcset = img_tag.get('srcset', '')
+        if srcset:
+            img_url = srcset.split(',')[3].strip().split()[0]
+        else:
+            img_url = img_tag.get('src') 
+
+        href = link_tag.get('href')
+
+        if href and not href.startswith('https'):
+            href = 'https://www.bbc.com' + href
+
+        if href in seen_urls:
+            continue
+
+        seen_urls.add(href)
+
+        stories.append({'title': title, 'url': href, 'img_path': img_url})
+
+        if len(stories) >= 20:
+            break
 
     return stories
