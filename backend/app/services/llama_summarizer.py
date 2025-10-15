@@ -11,7 +11,7 @@ def bbc_summarizer(url):
     user_prompt_prefix = """
     This is the scrapped data from the news article. Now summarize it the best you can.
     """
-    MODEL = 'llama3.1'
+    MODEL = 'deepseek-v3.1:671b-cloud'
 
     html = requests.get(url)
     soup = BeautifulSoup(html.content, 'html.parser')
