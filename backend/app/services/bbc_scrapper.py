@@ -37,10 +37,10 @@ def bbc_scrapper():
     stories = []
     seen_urls = set()
 
-    for article in soup.select('div.sc-225578b-0'):
-        link_tag = article.select_one('a.sc-8a623a54-0')
-        img_tag = article.select_one('img.sc-5340b511-0')
-        h2_tag = article.select_one('h2.sc-9d830f2a-3')
+    for article in soup.select('div.fAWaua'):
+        link_tag = article.select_one('a.huZCWi')
+        img_tag = article.select_one('img.hLdNfA')
+        h2_tag = article.select_one('h2.iCfgww')
 
         if not (link_tag and img_tag and h2_tag):
             continue
